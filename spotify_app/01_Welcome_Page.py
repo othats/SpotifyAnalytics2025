@@ -14,32 +14,34 @@ st.set_page_config(
 )
 
 st.logo(logo)
-st.title("Spotify Analytics App")
-st.markdown("## Análisis y Modelos Impulsados por Datos de Spotify")
+st.title("A Visual Music Recommender System")
+st.markdown(f"""
+## Powered by **:primary[Spotify Data]** and Advanced Analytics
+""")
 
-st.markdown("---")
-st.header("Introducción")
-st.markdown(
-    """
-    Bienvenido a la aplicación web de nuestro proyecto final. Esta plataforma permite explorar los datos
-    de millones de canciones de Spotify y utilizar modelos de Machine Learning
-    para la recomendación y predicción musical.
+st.markdown("""
+This project integrates **Machine Learning** models with **Visual Analytics** tools (Streamlit, Tableau) to explore the musical landscape of thousands of tracks. 
+""")
+st.divider()
 
-    **Utiliza el menú de la izquierda para navegar entre las secciones:**
-
-    * **EDA:** Explora las distribuciones, tendencias temporales y correlaciones de las características de audio.
-    * **Similar Song Recommender:** Encuentra canciones similares a cualquier pista dada usando K-Nearest Neighbors (KNN).
-    * **Popularity Predictor + XAI:** Predice la popularidad de una canción y usa SHAP para explicar qué características impulsan la predicción.
-    * **Genre Predictor:** Un clasificador que predice el género de una canción basado en sus características de audio.
-    """
-)
-
-st.markdown("---")
-st.header("Tecnologías")
+# --- Project Summary Section ---
 col1, col2, col3 = st.columns(3)
-col1.metric("Análisis y ML", "Python, Pandas, Scikit-learn, SHAP")
-col2.metric("Visualización", "Matplotlib, Seaborn, Streamlit, Tableau")
-col3.metric("Datos", "Spotify API Data, Kaggle Datasets")
 
-st.markdown("---")
-st.write("Miembros: Marina Castellano Blanco & Júlia Othats-Dalès Gibert")
+with col1:
+    st.header("1. Data Exploration")
+    st.markdown("Dive into the raw statistics, temporal trends, and feature distributions that shape music popularity.")
+
+with col2:
+    st.header("2. Recommender System")
+    st.markdown("Use a **K-Nearest Neighbors** model on audio features to find songs highly similar to a given track or artist.")
+    
+with col3:
+    st.header("3. Predictive Analytics")
+    st.markdown("Explore our **Random Forest Regressor** and the **SHAP** explanations to understand what drives a song's **:primary[Popularity]** score.")
+    
+st.divider()
+
+# --- Team Info ---
+st.info(f"""
+**Project Members:** Marina Castellano Blanco & Júlia Othats-Dalès Gibert
+""")
