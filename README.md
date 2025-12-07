@@ -1,7 +1,7 @@
 # SpotifyAnalytics2025
 ---
 
-## 👥 Authors
+## Authors
 
 
 * **Marina Castellano Blanco** - *4th Year - Mathematical Engineering in Data Science*
