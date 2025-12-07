@@ -1,5 +1,13 @@
 # SpotifyAnalytics2025
+---
 
+## 👥 Authors
+
+
+* **Marina Castellano Blanco** - *4th Year - Mathematical Engineering in Data Science*
+* **Julia Othats-Dalès** - *4th Year - Mathematical Engineering in Data Science*
+
+---
 This repository contains the final project for the Visual Analytics course. Our goal was to decode the "science" behind music success by combining data visualization, machine learning, and web development.
 
 The project is structured into three main components:
