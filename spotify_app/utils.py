@@ -46,7 +46,7 @@ def recommend_songs_by_artist(artist_name, df, model, transformer, n=10):
 
     # Columns used during model training
     numeric_cols = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch','pop']
-    categorical_cols = ['top genre']
+    categorical_cols = ['genre']
     id_cols = ['title', 'artist']
     feature_cols = numeric_cols + categorical_cols
 
@@ -104,7 +104,7 @@ def recommend_songs(song_title, df, model, transformer, n=10):
 
     # Columns used during training
     numeric_cols = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch','pop']
-    categorical_cols = ['top genre']
+    categorical_cols = ['genre']
     id_cols = ['title', 'artist']
 
     feature_cols = numeric_cols + categorical_cols

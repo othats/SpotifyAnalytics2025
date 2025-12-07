@@ -111,7 +111,7 @@ with tab_song:
 
                     # Safe merge using df_recommender, which includes genre + track_id
                     rec_details = recommendations.merge(
-                        df_recommender[['title', 'artist', 'top genre', 'track_id']],
+                        df_recommender[['title', 'artist', 'genre', 'track_id']],
                         on=['title', 'artist'],
                         how='left'
                     ).head(n_recs)
@@ -128,8 +128,8 @@ with tab_song:
                             st.markdown(f"**{row['title']}** by **{row['artist']}**")
                             st.markdown(f"Similarity: **{row['similarity']:.4f}**")
                             st.markdown(
-                                f"Genre: *{row['top genre']}*" 
-                                if pd.notna(row.get("top genre")) else 
+                                f"Genre: *{row['genre']}*" 
+                                if pd.notna(row.get("genre")) else 
                                 "Genre: *Not Available*"
                             )
 
@@ -202,7 +202,7 @@ with tab_artist:
 
                     # Merge with df_recommender to get track_id + genre
                     artist_details = recs_artist.merge(
-                        df_recommender[['title', 'artist', 'top genre', 'track_id']],
+                        df_recommender[['title', 'artist', 'genre', 'track_id']],
                         on=['title', 'artist'],
                         how='left'
                     )
@@ -220,8 +220,8 @@ with tab_artist:
                             st.markdown(f"**{row['title']}** by **{row['artist']}**")
                             st.markdown(f"Similarity: **{row['similarity']:.4f}**")
                             st.markdown(
-                                f"Genre: *{row['top genre']}*"
-                                if pd.notna(row.get("top genre")) else
+                                f"Genre: *{row['genre']}*"
+                                if pd.notna(row.get("genre")) else
                                 "Genre: *Not Available*"
                             )
 

@@ -1,171 +1,138 @@
-import streamlit as st
-import shap
-import joblib
-import matplotlib.pyplot as plt
-from utils import load_data
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
+# pages/04_Popularity_Predictor.py
 
-st.title("Popularity Prediction & Explainability")
+import streamlit as st
+import pandas as pd
+import joblib
+import shap
+import os
+import sys
+import numpy as np
+import altair as alt
+
+# ------------------------------------------------
+# Setup
+# ------------------------------------------------
+project_root = os.path.join(os.path.dirname(__file__), '..')
+sys.path.append(project_root)
+from utils import load_data
+
+st.set_page_config(layout="wide")
+st.title("Spotify Popularity Predictor")
 
 logo = "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg"
 st.logo(logo)
 
+# ------------------------------------------------
+# Load Data & Model
+# ------------------------------------------------
 df_audiofeatures, df_tracks = load_data()
 
-# seleccionar columnas
-numeric_cols = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch',]
-categorical_cols = ['top genre']
-id_cols = ['title', 'artist']
-# asegurar que las columnas numéricas son del tipo correcto
-for col in numeric_cols:
-    df_audiofeatures[col] = pd.to_numeric(df_audiofeatures[col], errors='coerce')
-df_audiofeatures = df_audiofeatures.dropna(subset=numeric_cols)
-target = "pop"
+# Only for embedding
+df_tracks_clean = df_tracks.rename(columns={'track_name': 'title', 'artist_name': 'artist'})
+df_spotify = df_tracks_clean.merge(df_audiofeatures, on=['title', 'artist'], how='inner')
 
-# categorical features to string
-for col in categorical_cols:
-    df_audiofeatures[col] = df_audiofeatures[col].astype(str)
+# Load pipeline & feature names
+popularity_pipeline = joblib.load('models/popularity_pipeline.pkl')
+feature_names = joblib.load('models/popularity_features.pkl')
 
-# remove nans
-df_audiofeatures = df_audiofeatures.dropna(subset=numeric_cols + categorical_cols + [target])
+# ------------------------------------------------
+# Helper: Spotify Embed
+# ------------------------------------------------
+def embed_spotify_track(track_id):
+    if pd.isna(track_id) or track_id == '':
+        return "<p>Track ID not available for embed.</p>"
+    return f"""
+    <iframe style="border-radius:12px" 
+        src="https://open.spotify.com/embed/track/{track_id}?utm_source=generator&theme=0" 
+        width="100%" 
+        height="152" 
+        frameBorder="0" 
+        allowfullscreen 
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy">
+    </iframe>
+    """
 
-# Load model
-pipeline = joblib.load("models/popularity_pipeline.pkl")
-rf_model = pipeline.named_steps["rf"]
-preprocessor = pipeline.named_steps["pre"]
-
-# Rebuild feature names
-num_names = numeric_cols
-cat_names = preprocessor.named_transformers_["cat"].get_feature_names_out(categorical_cols)
-feature_names = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch'] + list(cat_names)
-
-st.subheader("Model Performance on Test Set")
-
-# Recalculate performance quickly
-X = df_audiofeatures[numeric_cols + categorical_cols]
-y = df_audiofeatures[target]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+# ------------------------------------------------
+# UI: Song Selection
+# ------------------------------------------------
+song_options = df_spotify['title'] + " - " + df_spotify['artist']
+song_choice = st.selectbox(
+    "Choose a Song to Predict Popularity:",
+    options=[""] + sorted(song_options.unique())
 )
 
-y_pred = pipeline.predict(X_test)
-rmse = mean_squared_error(y_test, y_pred)
-r2 = r2_score(y_test, y_pred)
+if song_choice:
+    title_input, artist_input = song_choice.split(" - ")
 
-col1, col2 = st.columns(2)
-with col1:
-    st.metric("RMSE", f"{rmse:.3f}")
-with col2:
-    st.metric("R² Score", f"{r2:.3f}")
+    # ---------------------------
+    # Prepare features from df_audiofeatures
+    # ---------------------------
+    song_row = df_audiofeatures[(df_audiofeatures['title'] == title_input) & (df_audiofeatures['artist'] == artist_input)]
 
-st.divider()
+    if song_row.empty:
+        st.warning("Song not found in audio features dataset.")
+    else:
+        X_song = song_row.drop(columns=['pop', 'pop_bin', 'title', 'artist', 'genre'], errors='ignore')
 
-# ===========================================================
-# SECTION 1: Predict Popularity for a Custom Song
-# ===========================================================
+        X_song = X_song.reindex(columns=feature_names, fill_value=0)
+        X_song = X_song.astype(float)
 
-st.header("Predict Popularity for a New Track")
-
-with st.form("pop_form"):
-    cols = st.columns(3)
-    user_inputs = {}
-
-    # Numeric inputs
-    for i, col in enumerate(numeric_cols):
-        with cols[i % 3]:
-            user_inputs[col] = st.number_input(
-                col.replace("_", " ").title(),
-                value=float(df_audiofeatures[col].mean())
-            )
-
-    # Categorical inputs
-    for i, col in enumerate(categorical_cols):
-        with cols[(i + len(numeric_cols)) % 3]:
-            user_inputs[col] = st.selectbox(
-                col.title(),
-                sorted(df_audiofeatures[col].astype(str).unique())
-            )
-
-    submitted = st.form_submit_button("Predict Popularity")
-
-if submitted:
-    user_df = pd.DataFrame([user_inputs])
-    pred_pop = pipeline.predict(user_df)[0]
-
-    st.success(f"**Predicted Popularity: {pred_pop:.1f} / 100**")
-
-    # SHAP for local explanation
-    st.subheader("Explanation for This Prediction")
-
-    explainer = shap.TreeExplainer(rf_model)
-
-    # Transform user input into model-ready format
-    transformed = preprocessor.transform(user_df)
-    transformed_df = pd.DataFrame(
-        transformed.toarray() if hasattr(transformed, "toarray") else transformed,
-        columns=feature_names
-    )
-
-    shap_values_single = explainer(transformed_df)
-
-    fig_local, ax = plt.subplots(figsize=(8, 5))
-    shap.plots.waterfall(shap_values_single[0], show=False)
-    st.pyplot(fig_local)
-
-st.divider()
+        predicted_pop = popularity_pipeline.predict(X_song)[0]
+        predicted_prob = popularity_pipeline.predict_proba(X_song)[0][1]
 
 
+        col1, col2 = st.columns([1, 1])  # Equal width columns
 
-# ===========================================================
-# SECTION 2: Global Explainability (SHAP)
-# ===========================================================
+        with col1:
+            # Embed Spotify track
+            song_embed_row = df_spotify[(df_spotify['title'] == title_input) & (df_spotify['artist'] == artist_input)]
+            if not song_embed_row.empty:
+                st.subheader(f"Song: {title_input} by {artist_input}")
+                st.components.v1.html(embed_spotify_track(song_embed_row['track_id'].values[0]), height=160)
 
-st.header("Global Explainability")
+        with col2:
+            st.subheader("Prediction Results")
+            st.metric("Predicted Popularity (Binary)", "High" if predicted_pop == 1 else "Low")
+            st.info(f"Predicted probability of being popular: {predicted_prob:.2%}")
 
-st.write("These plots show which features the model relies on most when predicting popularity across **all songs**.")
+        # ---------------------------
+        # SHAP explainability
+        # ---------------------------
+        st.subheader("Feature Contribution (SHAP)")
 
-# Prepare full SHAP values only when user clicks (expensive)
-if st.button("Compute Global SHAP Explanations"):
-    with st.spinner("Computing SHAP values... this may take ~10-20 seconds"):
-        X_train_trans = preprocessor.transform(X_train)
-        X_train_df = pd.DataFrame(
-            X_train_trans.toarray() if hasattr(X_train_trans, "toarray") else X_train_trans,
-            columns=feature_names
+        # Extract model and preprocessor
+        model = popularity_pipeline.named_steps['model']
+        preprocessor = popularity_pipeline.named_steps['preprocessor']
+
+        # Transform input (numeric scaled, categorical passed through)
+        X_transformed = preprocessor.transform(X_song)
+
+        # Use a zero array as background for linear explainer
+        background = np.zeros((1, X_transformed.shape[1]))
+
+        # Initialize SHAP explainer for linear model
+        explainer = shap.LinearExplainer(model, background, feature_perturbation="interventional")
+        shap_values = explainer.shap_values(X_transformed)
+
+        # Convert to DataFrame
+        shap_df = pd.DataFrame({
+            'Feature': feature_names,
+            'SHAP_value': shap_values[0]
+        }).sort_values(by='SHAP_value', key=abs, ascending=False).head(10)
+
+        # Add a color column: green for positive, red for negative
+        shap_df['color'] = shap_df['SHAP_value'].apply(lambda x: 'green' if x > 0 else 'red')
+
+        # Plot with Altair
+        chart = alt.Chart(shap_df).mark_bar().encode(
+            x=alt.X('SHAP_value:Q', title='SHAP Value'),
+            y=alt.Y('Feature:N', sort='-x'),  # sort features in decreasing order by value
+            color=alt.Color('color:N', scale=None)  # use predefined color column
+        ).properties(
+            width=700,
+            height=400,
+            title='Top 10 Feature Contributions'
         )
 
-        explainer = shap.TreeExplainer(rf_model)
-        shap_values = explainer(X_train_df)
-
-    # Beeswarm plot
-    st.subheader("SHAP Beeswarm Plot")
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
-    shap.summary_plot(shap_values, X_train_df, show=False)
-    st.pyplot(fig1)
-
-    # Bar plot
-    st.subheader("Mean(|SHAP|) Feature Importance")
-    fig2, ax2 = plt.subplots(figsize=(10, 5))
-    shap.plots.bar(shap_values, show=False)
-    st.pyplot(fig2)
-
-    st.info("""
-### Interpretation
-
-**Loudness (dB)** is the strongest predictor of popularity:  
-- Louder tracks → higher predicted popularity  
-- Softer recordings → lower predicted popularity  
-
-**Genres** (via one-hot encoding) also have large influence.  
-Some genres consistently add positive influence, others negative.
-
-**Danceability, energy, valence, tempo** influence popularity in intuitive ways:
-- High danceability boosts predictions  
-- Very long / very short tracks reduce popularity  
-
-**Acousticness & speechiness** often push predictions downward, meaning mainstream hits tend to be less acoustic and less speech-driven.
-
-Overall, the model learns musically meaningful relationships.
-""")
+        st.altair_chart(chart)
