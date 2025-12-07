@@ -61,7 +61,7 @@ with tab_song:
     col_input, col_slider = st.columns([3, 1])
 
     # Create selectbox choices: "Song - Artist"
-    song_options = df_tracks_clean['title'] + " - " + df_tracks_clean['artist']
+    song_options = df_tracks_clean['title'] + "  -  " + df_tracks_clean['artist']
 
     with col_input:
         song_display = st.selectbox(
@@ -77,7 +77,7 @@ with tab_song:
         if song_display:
             # Split back into title + artist
             try:
-                title_input, artist_input = song_display.split(" - ")
+                title_input, artist_input = song_display.split("  -  ")
             except:
                 st.warning("Invalid song format.")
                 st.stop()

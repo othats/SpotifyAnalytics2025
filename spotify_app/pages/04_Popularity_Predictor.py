@@ -56,14 +56,14 @@ def embed_spotify_track(track_id):
 # ------------------------------------------------
 # UI: Song Selection
 # ------------------------------------------------
-song_options = df_spotify['title'] + " - " + df_spotify['artist']
+song_options = df_spotify['title'] + "  -  " + df_spotify['artist']
 song_choice = st.selectbox(
     "Choose a Song to Predict Popularity:",
     options=[""] + sorted(song_options.unique())
 )
 
 if song_choice:
-    title_input, artist_input = song_choice.split(" - ")
+    title_input, artist_input = song_choice.split("  -  ")
 
     # ---------------------------
     # Prepare features from df_audiofeatures
