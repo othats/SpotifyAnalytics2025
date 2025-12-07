@@ -15,7 +15,7 @@ FEATURE_COLS = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch']
 def load_data():
     try: 
         df_audiofeatures = pd.read_csv(
-            os.path.join(PROJECT_ROOT, 'data', 'spotify_audiofeatures.csv')
+            os.path.join(PROJECT_ROOT, 'data', 'spotify_audio_features.csv')
         )
         df_tracks = pd.read_csv(
             os.path.join(PROJECT_ROOT, 'data', 'spotify_tracks_artists.csv')
@@ -28,11 +28,11 @@ def load_data():
 @st.cache_resource
 def load_models():
     try: 
-        knn = joblib.load('models/recommender_knn.pkl')
-        knn_preprocessor = joblib.load('models/recommender_preprocessor.pkl')
-        popularity_pipeline = joblib.load('models/popularity_pipeline.pkl')
-        genre_model = joblib.load('models/genre_classifier.pkl')
-        genre_scaler = joblib.load('models/genre_scaler.pkl')   
+        knn = joblib.load(os.path.join(PROJECT_ROOT, 'models', 'recommender_knn.pkl'))
+        knn_preprocessor = joblib.load(os.path.join(PROJECT_ROOT, 'models', 'recommender_preprocessor.pkl'))
+        popularity_pipeline = joblib.load(os.path.join(PROJECT_ROOT, 'models', 'popularity_pipeline.pkl'))
+        genre_model = joblib.load(os.path.join(PROJECT_ROOT, 'models', 'genre_classifier.pkl')) 
+        genre_scaler = joblib.load(os.path.join(PROJECT_ROOT, 'models', 'genre_scaler.pkl'))
         return knn, knn_preprocessor, popularity_pipeline, genre_model, genre_scaler
     except Exception as e:
         st.error(f"Error loading models: {e}")
