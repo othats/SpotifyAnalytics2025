@@ -19,3 +19,28 @@ Download the project files to your local folder:
 ```bash
 git clone [https://github.com/your-username/spotify-visual-analytics.git](https://github.com/your-username/spotify-visual-analytics.git)
 cd spotify-visual-analytics
+```
+
+2. Create a Virtual Environment (Recommended) It is best practice to create an isolated environment to manage dependencies.
+
+Windows:
+```bash
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+Mac/Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. Install Dependencies We have provided a requirements.txt file with all necessary libraries (Streamlit, Pandas, Scikit-learn, etc.):
+```bash
+pip install -r requirements.txt
+```
+4. Run the Application Launch the main welcome page using Streamlit:
+   
+```bash
+streamlit run 01_Welcome_Page.py
+```
