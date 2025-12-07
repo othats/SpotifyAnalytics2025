@@ -9,3 +9,13 @@ The project is structured into three main components:
 2. Music Recommendation Engine: A Machine Learning model (KNN) that recommends songs based on their mathematical "sonic DNA" (audio features like energy, danceability, and acousticness).
 
 3. Interactive Web App (Streamlit): A user-friendly application where anyone can explore the data, visualize genre profiles, and get personalized song recommendations in real-time.
+
+## Installation & Usage
+
+Follow these steps to run the project locally on your machine.
+
+**1. Clone the repository**
+Download the project files to your local folder:
+```bash
+git clone [https://github.com/your-username/spotify-visual-analytics.git](https://github.com/your-username/spotify-visual-analytics.git)
+cd spotify-visual-analytics
