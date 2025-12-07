@@ -37,67 +37,103 @@ def load_models():
     except Exception as e:
         st.error(f"Error loading models: {e}")
         return None, None, None, None, None
-    
+  
 def recommend_songs_by_artist(artist_name, df, model, transformer, n=10):
-    """Recommends songs by finding similar tracks to all tracks by a given artist."""
+    """
+    Recommends songs similar to all songs by a given artist.
+    Aggregates results, removes duplicates, and returns top N.
+    """
 
-    # Search for songs by the artist (case-insensitive)
+    # Columns used during model training
+    numeric_cols = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch','pop']
+    categorical_cols = ['top genre']
+    id_cols = ['title', 'artist']
+    feature_cols = numeric_cols + categorical_cols
+
+    # Find all songs by the artist
     artist_songs = df[df['artist'].str.lower() == artist_name.lower()]
 
     if artist_songs.empty:
-        # Returning a DataFrame instead of a string handles the Streamlit page logic cleaner
-        return pd.DataFrame() 
+        return pd.DataFrame()
 
     recommendations = []
 
+    # Loop through each song by the artist
     for _, song in artist_songs.iterrows():
 
-        # Get features and transform the song vector
-        song_df = song.to_frame().T  
+        # Convert single row to DataFrame
+        song_df = song[feature_cols].to_frame().T
+
+        # Transform
         song_vector = transformer.transform(song_df)
 
-        # Find neighbors (n+1 to exclude the song itself)
+        # Nearest neighbors
         distances, indices = model.kneighbors(song_vector, n_neighbors=n+1)
 
-        # Get similar songs
+        # Get recommended songs (excluding the same one)
         recs = df.iloc[indices[0][1:]].copy()
-
-        # Add similarity score (1 / (1 + distance))
         recs["similarity"] = 1 / (1 + distances[0][1:])
 
-        # Save columns
-        recommendations.append(recs[[*ID_COLS, "similarity"]])
+        # Keep consistent columns
+        recs = recs[id_cols + ["similarity"]]
 
-    # Aggregate, deduplicate, and sort
+        recommendations.append(recs)
+
+    # Combine all recommendation batches
+    recommendations = pd.concat(recommendations, ignore_index=True)
+
+    # Remove duplicates: keep highest similarity
     recommendations = (
-        pd.concat(recommendations, ignore_index=True)
-        .drop_duplicates(subset=ID_COLS)
+        recommendations
+        .drop_duplicates(subset=id_cols)
         .sort_values("similarity", ascending=False)
         .head(n)
     )
 
     return recommendations
 
-def recommend_songs(song_title, df, model, transformer, n=10):
-    """Recommends songs similar to a specific track."""
 
-    # Search for the exact song (case-insensitive)
+
+def recommend_songs(song_title, df, model, transformer, n=10):
+
+    # find exact song (case-insensitive)
     match = df[df['title'].str.lower() == song_title.lower()]
 
     if match.empty:
-        return pd.DataFrame() 
+        return pd.DataFrame()
 
-    # Transform the song vector
-    song_vector = transformer.transform(match)
+    # Columns used during training
+    numeric_cols = ['bpm','nrgy','dnce','dB','live','val','dur','acous','spch','pop']
+    categorical_cols = ['top genre']
+    id_cols = ['title', 'artist']
 
-    # Find nearest neighbors (n+1 to exclude the same song)
+    feature_cols = numeric_cols + categorical_cols
+
+    # Subset to training columns only
+    X_song = match[feature_cols]
+
+    # Transform
+    song_vector = transformer.transform(X_song)
+
+    # Neighbors
     distances, indices = model.kneighbors(song_vector, n_neighbors=n+1)
 
-    results = df.loc[indices[0][1:]].copy() # Exclude the input song
-    results["similarity"] = 1 / (1 + distances[0][1:]) # Convert distance to similarity
+    # Results
+    results = df.iloc[indices[0][1:]].copy()
+    results["similarity"] = 1 / (1 + distances[0][1:])
 
-    return results[[*ID_COLS, "similarity"]]
+    # Deduplicate
+    results = (
+        results
+        .drop_duplicates(subset=id_cols)
+        .sort_values("similarity", ascending=False)
+        .head(n)
+    )
 
+    # Remove the searched song (safety)
+    results = results[results["title"].str.lower() != song_title.lower()]
+
+    return results[id_cols + ["similarity"]]
 
 # --- Prediction Function (Adapted from your code) ---
 

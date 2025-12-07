@@ -8,7 +8,9 @@ from collections import Counter
 from utils import load_data
 
 st.set_page_config(layout="wide")
-st.title("Spotify Music Analytics – Data Exploration")
+st.title("Spotify Music Analytics - Data Exploration")
+logo = "https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg"
+st.logo(logo)
 
 # Theme color shortcut
 THEME_COLOR = st.get_option("theme.primaryColor")
@@ -91,10 +93,17 @@ with tab1:
     with col1:
         st.markdown("**Tracks & Artists Sample**")
         st.dataframe(df_tracks.head(5), use_container_width=True)
+        st.markdown(f"**Tracks & Artists Dataset:** {df_tracks.shape[0]} tracks, {df_tracks.shape[1]} features")
 
     with col2:
         st.markdown("**Audio Features Sample**")
         st.dataframe(df_audiofeatures.head(5), use_container_width=True)
+        st.markdown(f"**Audio Features Dataset:** {df_audiofeatures.shape[0]} tracks, {df_audiofeatures.shape[1]} features")
+
+    # merged dataset info
+    st.subheader("Merged Dataset")
+    st.markdown(f"The merged dataset used for analysis contains **{df_spotify.shape[0]} tracks** with **{df_spotify.shape[1]} features** combining both metadata and audio characteristics.")
+    st.dataframe(df_spotify.head(5), use_container_width=True)  
 
 # ===================================================================
 # TAB 2 — TRACKS & ARTISTS EDA
