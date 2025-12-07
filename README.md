@@ -1,8 +1,4 @@
 # SpotifyAnalytics2025
----
-
-## Authors
-
 
 * **Marina Castellano Blanco** - *4th Year - Mathematical Engineering in Data Science*
 * **Julia Othats-Dalès** - *4th Year - Mathematical Engineering in Data Science*
