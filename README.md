@@ -48,3 +48,4 @@ pip install -r requirements.txt
 ```bash
 streamlit run spotify_app/01_Welcome_Page.py
 ```
+! If this doesn't work, you may not be in the correct root directory. Make sure you are located in the repository's folder, not the spotify_app folder, so that the app gets acces to the data and saved models.
