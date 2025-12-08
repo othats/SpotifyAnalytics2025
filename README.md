@@ -46,5 +46,5 @@ pip install -r requirements.txt
 4. Run the Application Launch the main welcome page using Streamlit:
    
 ```bash
-streamlit run 01_Welcome_Page.py
+streamlit run spotify_app/01_Welcome_Page.py
 ```
